@@ -1,0 +1,11 @@
+<addressBook>
+  <card>
+    <name>John Smith</name>
+    <name>J.A. Smith</name>
+    <email>js@example.com</email>
+  </card>
+  <card>
+    <name>Fred Bloggs</name>
+    <email>fb@example.net</email>
+  </card>
+</addressBook>

@@ -8,6 +8,7 @@
 
 #include <libxml/parser.h>
 #include <libxml/xmlschemas.h>
+#include <libxml/relaxng.h>
 
 #include "luaxml2.h"
 
@@ -35,13 +36,86 @@ void save_warnings(void * buffer, const char * msg, ...) {
     luaL_addstring(buffer, string);
 };
 
+/* Validates XML documents against RELAX NG XML Schemas.
+ *
+ * Requires two parameters to be on the stack:
+ * - [1]: a string containing the XML Document to be validated.
+ * - [2]: the filename of the W3C XML Schema to validate against.
+ */
+static int l_validate_relax_ng (lua_State *L) {
+    xmlDocPtr doc; /* the resulting document tree */
+    xmlDocPtr schema_doc; /* the XML schema document tree */
+    xmlRelaxNGParserCtxtPtr parser_ctxt; /* the XML schema parser context */
+    xmlRelaxNGPtr schema; /* the parsed XML schema */
+    xmlRelaxNGValidCtxtPtr valid_ctxt; /* the XML schema validation context */
+
+    size_t len; /* length of the xml string buffer */
+    const char *xml = luaL_checklstring(L, 1, &len); /* xml string buffer */
+    const char *schema_filename = luaL_checkstring(L, 2); /* xml schema string buffer */
+
+    doc = xmlReadMemory(xml, len, "noname.xml", NULL, XML_PARSE_NONET);
+    if (doc == NULL) {
+        return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
+    }
+
+    schema_doc = xmlReadFile(schema_filename, NULL, XML_PARSE_NONET);
+    if (schema_doc == NULL) {
+        xmlFreeDoc(doc);
+        return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
+    }
+    
+    parser_ctxt = xmlRelaxNGNewDocParserCtxt(schema_doc);
+    if (parser_ctxt == NULL) {
+        xmlFreeDoc(schema_doc);
+        xmlFreeDoc(doc);
+        return luaL_error(L, "Unable to create a parser context for the schema.");
+    }
+    
+    // Initialize a buffer for error messages.
+    luaL_Buffer buf;
+    luaL_buffinit(L, &buf);
+    // Set error handler.
+    xmlRelaxNGSetParserErrors(parser_ctxt, &save_errors, &save_warnings, &buf);
+
+    schema = xmlRelaxNGParse(parser_ctxt);
+    if (schema == NULL) {
+        xmlRelaxNGFreeParserCtxt(parser_ctxt);
+        xmlFreeDoc(schema_doc);
+        xmlFreeDoc(doc);
+        return luaL_error(L, "The schema itself is not valid.");
+    }
+
+    valid_ctxt = xmlRelaxNGNewValidCtxt(schema);
+    if (valid_ctxt == NULL) {
+        xmlRelaxNGFree(schema);
+        xmlRelaxNGFreeParserCtxt(parser_ctxt);
+        xmlFreeDoc(schema_doc);
+        xmlFreeDoc(doc);
+        return luaL_error(L, "Unable to create a validation context for the schema.");
+    }
+
+    // Set error handler.
+    xmlRelaxNGSetValidErrors(valid_ctxt, &save_errors, &save_warnings, &buf);
+
+    int is_valid = (xmlRelaxNGValidateDoc(valid_ctxt, doc) == 0);
+    xmlRelaxNGFreeValidCtxt(valid_ctxt);
+    xmlRelaxNGFree(schema);
+    xmlRelaxNGFreeParserCtxt(parser_ctxt);
+    xmlFreeDoc(schema_doc);
+    xmlFreeDoc(doc);
+    // Push results: (boolean), (string)
+    lua_pushboolean(L, is_valid);
+    luaL_pushresult(&buf);
+    return 2;
+}
+
 /* Validates XML documents against W3C XML Schemas.
  *
  * Requires two parameters to be on the stack:
  * - [1]: a string containing the XML Document to be validated.
  * - [2]: the filename of the W3C XML Schema to validate against.
  */
-static int l_validate (lua_State *L) {
+static int l_validate_xsd (lua_State *L) {
     xmlDocPtr doc; /* the resulting document tree */
     xmlDocPtr schema_doc; /* the XML schema document tree */
     xmlSchemaParserCtxtPtr parser_ctxt; /* the XML schema parser context */
@@ -108,8 +182,10 @@ static int l_validate (lua_State *L) {
     return 2;
 }
 
+
 static const struct luaL_reg luaxml2[] = {
-    {"validate", l_validate},
+    {"validateXSD", l_validate_xsd},
+    {"validateRelaxNG", l_validate_relax_ng},
     {NULL, NULL}    /* sentinel */
 };
 

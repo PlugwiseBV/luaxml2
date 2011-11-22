@@ -20,11 +20,4 @@ assert(ok == true, err)
 local ok, err = luaxml2.validateRelaxNG(io.open("test/invalid_address_book.xml", "r"):read("*all"), "test/address_book_pattern.rng")
 assert(ok == false, "This XML document should not be validated by the pattern.")
 
---local ok, err = luaxml2.validateRelaxNG(io.open("test/valid_patronA.xml", "r"):read("*all"), "test/patron_schema.rng") 
---assert(ok == true, err)
---local ok, err = luaxml2.validateRelaxNG(io.open("test/valid_patronB.xml", "r"):read("*all"), "test/patron_schema.rng") 
---assert(ok == true, err)
---local ok, err = luaxml2.validateRelaxNG(io.open("test/invalid_patron.xml", "r"):read("*all"), "test/patron_schema.rng")
---assert(ok == false, "This XML document should not be validated by the schema.")
-
 print("\nAll tests are successful.\n")

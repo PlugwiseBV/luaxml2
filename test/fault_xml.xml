@@ -1,0 +1,15 @@
+<config xmlns="http://xml2cpp.com/config.xsd">
+    <userrName>John Smith</userrName>
+    <maxRecentProjects>10</maxRecentProjects>
+    
+    <recentProject>z:\projects\project1.prj</recentProject>
+    <recentProject>z:\projects\project5.prj</recentProject>
+    <recentProject>z:\projects\project3.prj</recentProject>
+    <recentProject>z:\projects\project2.prj</recentProject>
+    
+    <childWindow name="Input" width="200" height="100"/>
+    <childWindow name="Output" width="200" height="150"/>
+    <childWindow name="Transformation" width="300" height="100"/>
+    
+    <dictionary language="en">z:\projects\dictionary.dic</dictionary>
+</config>

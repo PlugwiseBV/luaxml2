@@ -9,32 +9,42 @@
 #include <libxml/parser.h>
 #include <libxml/xmlschemas.h>
 #include <libxml/relaxng.h>
+#include <libxml/xmlerror.h>
 
 #include "luaxml2.h"
 
 #define TMP_BUF_SIZE 256
+#define LINE_SIZE 16
 
-// Save error messages by adding them to a luaL_Buffer.
-void save_errors(void * buffer, const char * msg, ...) {
-    char string[TMP_BUF_SIZE];
-    va_list arg_ptr;
-
-    va_start(arg_ptr, msg);
-    vsnprintf(string, TMP_BUF_SIZE, msg, arg_ptr);
-    va_end(arg_ptr);
-    luaL_addstring(buffer, string);
-};
-
-// Save warnings by adding them to a luaL_Buffer.
-void save_warnings(void * buffer, const char * msg, ...) {
-    char string[TMP_BUF_SIZE];
-    va_list arg_ptr;
-
-    va_start(arg_ptr, msg);
-    vsnprintf(string, TMP_BUF_SIZE, msg, arg_ptr);
-    va_end(arg_ptr);
-    luaL_addstring(buffer, string);
-};
+// Structured error handler.
+void save_structured_errors(void * buffer, xmlErrorPtr err) {
+    if (err->file) {
+        luaL_addstring(buffer, err->file);
+    }
+    if (err->line) {
+        char string[LINE_SIZE];
+        if (err->int2) {
+            snprintf(string, LINE_SIZE, ":%i:%i: ", err->line, err->int2);
+        } else {
+            snprintf(string, LINE_SIZE, ":%i: ", err->line);
+        }
+        luaL_addstring(buffer, string);
+    } else {
+        luaL_addstring(buffer, ": ");
+    }
+    if (err->message) {
+        luaL_addstring(buffer, err->message);
+    }
+    if (err->str1) {
+        luaL_addstring(buffer, err->str1);
+    }
+    if (err->str2) {
+        luaL_addstring(buffer, err->str2);
+    }
+    if (err->str3) {
+        luaL_addstring(buffer, err->str3);
+    }
+}
 
 /* Validates XML documents against RELAX NG XML Schemas.
  *
@@ -53,7 +63,7 @@ static int l_validate_relax_ng (lua_State *L) {
     const char *xml = luaL_checklstring(L, 1, &len); /* xml string buffer */
     const char *schema_filename = luaL_checkstring(L, 2); /* xml schema string buffer */
 
-    doc = xmlReadMemory(xml, len, "noname.xml", NULL, XML_PARSE_NONET);
+    doc = xmlReadMemory(xml, len, "", NULL, XML_PARSE_NONET);
     if (doc == NULL) {
         return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
     }
@@ -75,7 +85,7 @@ static int l_validate_relax_ng (lua_State *L) {
     luaL_Buffer buf;
     luaL_buffinit(L, &buf);
     // Set error handler.
-    xmlRelaxNGSetParserErrors(parser_ctxt, &save_errors, &save_warnings, &buf);
+    xmlRelaxNGSetParserStructuredErrors(parser_ctxt, &save_structured_errors, &buf);
 
     schema = xmlRelaxNGParse(parser_ctxt);
     if (schema == NULL) {
@@ -95,7 +105,7 @@ static int l_validate_relax_ng (lua_State *L) {
     }
 
     // Set error handler.
-    xmlRelaxNGSetValidErrors(valid_ctxt, &save_errors, &save_warnings, &buf);
+    xmlRelaxNGSetValidStructuredErrors(valid_ctxt, &save_structured_errors, &buf);
 
     int is_valid = (xmlRelaxNGValidateDoc(valid_ctxt, doc) == 0);
     xmlRelaxNGFreeValidCtxt(valid_ctxt);
@@ -148,7 +158,7 @@ static int l_validate_xsd (lua_State *L) {
     luaL_Buffer buf;
     luaL_buffinit(L, &buf);
     // Set error handler.
-    xmlSchemaSetParserErrors(parser_ctxt, &save_errors, &save_warnings, &buf);
+    xmlSchemaSetParserStructuredErrors(parser_ctxt, &save_structured_errors, &buf);
 
     schema = xmlSchemaParse(parser_ctxt);
     if (schema == NULL) {
@@ -168,7 +178,7 @@ static int l_validate_xsd (lua_State *L) {
     }
 
     // Set error handler.
-    xmlSchemaSetValidErrors(valid_ctxt, &save_errors, &save_warnings, &buf);
+    xmlSchemaSetValidStructuredErrors(valid_ctxt, &save_structured_errors, &buf);
 
     int is_valid = (xmlSchemaValidateDoc(valid_ctxt, doc) == 0);
     xmlSchemaFreeValidCtxt(valid_ctxt);

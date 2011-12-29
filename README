@@ -1,0 +1,11 @@
+Limited lua sauce for libxml2
+author: jpf, mme
+
+install dependencies:
+	sudo apt-get install libxml2-dev libxml2 lua5.1 liblua5.1-dev
+
+compile:
+	make
+
+install:
+	sudo make install

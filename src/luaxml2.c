@@ -16,6 +16,11 @@
 #define TMP_BUF_SIZE 256
 #define LINE_SIZE 16
 
+/** global pointers to the read XML and validation schema **/
+xmlDocPtr doc; /* the resulting document tree */
+xmlDocPtr schema_doc; /* the XML schema document tree */
+
+
 // Structured error handler.
 void save_structured_errors(void * buffer, xmlErrorPtr err) {
     if (err->file) {
@@ -119,33 +124,15 @@ static int l_validate_relax_ng (lua_State *L) {
     return 2;
 }
 
-/* Validates XML documents against W3C XML Schemas.
- *
- * Requires two parameters to be on the stack:
- * - [1]: a string containing the XML Document to be validated.
- * - [2]: the filename of the W3C XML Schema to validate against.
+/** Validate an XML string against an XML Schema string
+ * @param doc pointer to the xml
+ * @param schema_doc pointer to the schema
+ * @param L pointer to the lua state for returning the result or errors
  */
-static int l_validate_xsd (lua_State *L) {
-    xmlDocPtr doc; /* the resulting document tree */
-    xmlDocPtr schema_doc; /* the XML schema document tree */
+static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
     xmlSchemaParserCtxtPtr parser_ctxt; /* the XML schema parser context */
     xmlSchemaPtr schema; /* the parsed XML schema */
     xmlSchemaValidCtxtPtr valid_ctxt; /* the XML schema validation context */
-
-    size_t len; /* length of the xml string buffer */
-    const char *xml = luaL_checklstring(L, 1, &len); /* xml string buffer */
-    const char *schema_filename = luaL_checkstring(L, 2); /* xml schema string buffer */
-
-    doc = xmlReadMemory(xml, len, "noname.xml", NULL, XML_PARSE_NONET);
-    if (doc == NULL) {
-        return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
-    }
-
-    schema_doc = xmlReadFile(schema_filename, NULL, XML_PARSE_NONET);
-    if (schema_doc == NULL) {
-        xmlFreeDoc(doc);
-        return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
-    }
     
     parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
     if (parser_ctxt == NULL) {
@@ -192,9 +179,60 @@ static int l_validate_xsd (lua_State *L) {
     return 2;
 }
 
+/** Validate an XML string against an XML Schema from a file
+ *
+ * Requires two parameters to be on the stack:
+ * @param [1]: a string containing the XML Document to be validated.
+ * @param [2]: a string containing the filename of the XML Schema to validate against.
+ */
+static int l_validate_xsd_file(lua_State *L){
+    size_t len; /* length of the xml string buffer */
+    const char *xml = luaL_checklstring(L, 1, &len); /* xml string buffer */
+    const char *schema_filename = luaL_checkstring(L, 2); /* xml schema string buffer */
+
+    doc = xmlReadMemory(xml, len, "noname.xml", NULL, XML_PARSE_NONET);
+    if (doc == NULL) {
+        return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
+    }
+
+    schema_doc = xmlReadFile(schema_filename, NULL, XML_PARSE_NONET);
+    if (schema_doc == NULL) {
+        xmlFreeDoc(doc);
+        return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
+    }
+    
+    return validate_xsd(doc, schema_doc, L);
+
+}
+
+/** Validate an XML string against an XML Schema string
+ * Requires two parameters to be on the stack:
+ * @param [1]: a string containing the XML Document to be validated.
+ * @param [2]: a string containing the XML Schema to validate against.
+ */
+static int l_validate_xsd_string(lua_State *L){
+	size_t xml_len; /* length of the xml string buffer */
+	size_t schema_len; /* length of the schema string buffer */
+	const char *xml = luaL_checklstring(L, 1, &xml_len); /* xml string buffer */
+	const char *schema = luaL_checklstring(L, 2, &schema_len); /* xml schema string buffer */
+	
+	doc = xmlReadMemory(xml, xml_len, "noname.xml", NULL, XML_PARSE_NONET);
+	if (doc == NULL) {
+	    return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
+	}
+	
+	schema_doc = xmlReadMemory(schema, schema_len, "noname.xml", NULL, XML_PARSE_NONET);
+	if (schema_doc == NULL) {
+	    xmlFreeDoc(doc);
+	    return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
+	}
+	
+	return validate_xsd(doc, schema_doc, L);
+}
 
 static const struct luaL_reg luaxml2[] = {
-    {"validateXSD", l_validate_xsd},
+    {"validateXSD", l_validate_xsd_file},
+    {"validateXSDString", l_validate_xsd_string},
     {"validateRelaxNG", l_validate_relax_ng},
     {NULL, NULL}    /* sentinel */
 };

@@ -11,7 +11,7 @@ local assertIs = require"pwutil.type.assertIs"
 TestLuaXML2 = {}
 
 function TestLuaXML2:test_xsd_file_true()
-	local ok, err = luaxml2.validateXSD(io.open("test/example_xml.xml", "r"):read("*all"), "test/example_schema.xsd") 
+	local ok, err = luaxml2.validateXSD(io.open("test/example_xml.xml", "r"):read("*all"), "test/example_schema.xsd")
 	assertIs.True(ok, err)
 end
 
@@ -21,7 +21,7 @@ function TestLuaXML2:test_xsd_file_false()
 end
 
 function TestLuaXML2:test_ng_file_true()
-	local ok, err = luaxml2.validateRelaxNG(io.open("test/valid_address_book.xml", "r"):read("*all"), "test/address_book_pattern.rng") 
+	local ok, err = luaxml2.validateRelaxNG(io.open("test/valid_address_book.xml", "r"):read("*all"), "test/address_book_pattern.rng")
 	assertIs.True(ok, err)
 end
 
@@ -63,7 +63,7 @@ function TestLuaXML2:test_xsd_string_true()
 	</wifi>
 	]]
 	
-	local ok, err = luaxml2.validateXSDString(xml, xsd) 
+	local ok, err = luaxml2.validateXSDString(xml, xsd)
 	assertIs.True(ok, err)
 end
 
@@ -99,7 +99,7 @@ function TestLuaXML2:test_xsd_string_false()
 	</wifi>
 	]]
 	
-	local ok, err = luaxml2.validateXSDString(xml, xsd) 
+	local ok, err = luaxml2.validateXSDString(xml, xsd)
 	assertIs.False(ok, "This XML document should not be validated by the schema.")
 end
 

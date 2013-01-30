@@ -33,7 +33,7 @@ function test_xsd_string_true()
 	</wifi>
 	]]
 	
-	local ok, err = luaxml2.validateXSDString(xml, xsd) 
+	local ok, err = luaxml2.validateXSDString(xml, xsd)
 end
 
 for i=1,10000 do

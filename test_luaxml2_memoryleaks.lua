@@ -21,7 +21,7 @@ function test_xsd_string_true()
 	</xs:element>
 	</xs:schema>
 	]]
-	
+
 	local xml = [[<?xml version="1.0" encoding="utf-8"?>
 	<wifi>
 	  <mode>sta</mode>
@@ -32,7 +32,7 @@ function test_xsd_string_true()
 	  </encryption>
 	</wifi>
 	]]
-	
+
 	local ok, err = luaxml2.validateXSDString(xml, xsd)
 end
 

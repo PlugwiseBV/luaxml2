@@ -70,13 +70,13 @@ static int l_validate_relax_ng (lua_State *L) {
 
     doc = xmlReadMemory(xml, len, "", NULL, XML_PARSE_NONET);
     if (doc == NULL) {
-        return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
+        return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed:\n%s", xml);
     }
 
     schema_doc = xmlReadFile(schema_filename, NULL, XML_PARSE_NONET);
     if (schema_doc == NULL) {
         xmlFreeDoc(doc);
-        return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
+        return luaL_error(L, "Invalid parameter #2 (%s): XML Schema can't be loaded or is not well-formed.", schema_filename);
     }
     
     parser_ctxt = xmlRelaxNGNewDocParserCtxt(schema_doc);

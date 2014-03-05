@@ -1,5 +1,7 @@
-Limited lua sauce for libxml2
-author: jpf, mme
+LuaXML2 - Lua wrapper for LibXML2's validation of XSD and RelaxNG validation.
+
+Author: JP Florijn <c.florijn@plugwise.com>
+(C) 2011-2014, Plugwise BV, The Netherlands
 
 install dependencies:
 	sudo apt-get install libxml2-dev libxml2 lua5.1 liblua5.1-dev

@@ -94,7 +94,11 @@ static int l_validate_relax_ng (lua_State *L) {
         xmlRelaxNGFreeParserCtxt(parser_ctxt);
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
-        return luaL_error(L, "The schema itself is not valid.");
+        lua_pushstring(L, "The schema itself is not valid: ");
+        lua_pushvalue(L, 1);
+        lua_remove(L, 1);
+        lua_concat(L, 2);
+        return lua_error(L);
     }
 
     valid_ctxt = xmlRelaxNGNewValidCtxt(schema);
@@ -103,7 +107,11 @@ static int l_validate_relax_ng (lua_State *L) {
         xmlRelaxNGFreeParserCtxt(parser_ctxt);
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
-        return luaL_error(L, "Unable to create a validation context for the schema.");
+        lua_pushstring(L, "Unable to create a validation context for the schema: ");
+        lua_pushvalue(L, 1);
+        lua_remove(L, 1);
+        lua_concat(L, 2);
+        return lua_error(L);
     }
 
     // Set error handler.
@@ -152,7 +160,11 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
         xmlSchemaFreeParserCtxt(parser_ctxt);
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
-        return luaL_error(L, "The schema itself is not valid.");
+        lua_pushstring(L, "The schema itself is not valid: ");
+        lua_pushvalue(L, 1);
+        lua_remove(L, 1);
+        lua_concat(L, 2);
+        return lua_error(L);
     }
 
     valid_ctxt = xmlSchemaNewValidCtxt(schema);
@@ -161,7 +173,11 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
         xmlSchemaFreeParserCtxt(parser_ctxt);
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
-        return luaL_error(L, "Unable to create a validation context for the schema.");
+        lua_pushstring(L, "Unable to create a validation context for the schema: ");
+        lua_pushvalue(L, 1);
+        lua_remove(L, 1);
+        lua_concat(L, 2);
+        return lua_error(L);
     }
 
     // Set error handler.

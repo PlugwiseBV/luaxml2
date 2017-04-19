@@ -20,35 +20,33 @@
 xmlDocPtr doc; /* the resulting document tree */
 xmlDocPtr schema_doc; /* the XML schema document tree */
 
+luaL_Buffer buf;
 
 // Structured error handler.
-void save_structured_errors(void * buffer, xmlErrorPtr err) {
+void save_structured_errors(void *L, xmlErrorPtr err) {
+    // Initialize a buffer for error messages.
+    luaL_buffinit(L, &buf);
+    luaL_addvalue(&buf);
     if (err->file) {
-        luaL_addstring(buffer, err->file);
-    }
-    if (err->line) {
-        char string[LINE_SIZE];
-        if (err->int2) {
-            snprintf(string, LINE_SIZE, ":%i:%i: ", err->line, err->int2);
-        } else {
-            snprintf(string, LINE_SIZE, ":%i: ", err->line);
+        if (strlen(err->file) > 0)
+            luaL_addstring(&buf, err->file);
+        else
+            luaL_addstring(&buf, "(document)");
+        if (err->line) {
+            char string[LINE_SIZE];
+            if (err->int2) {
+                snprintf(string, LINE_SIZE, ":%i:%i", err->line, err->int2);
+            } else {
+                snprintf(string, LINE_SIZE, ":%i", err->line);
+            }
+            luaL_addstring(&buf, string);
         }
-        luaL_addstring(buffer, string);
-    } else {
-        luaL_addstring(buffer, ": ");
+        luaL_addstring(&buf, ": ");
     }
     if (err->message) {
-        luaL_addstring(buffer, err->message);
+        luaL_addstring(&buf, err->message);
     }
-    if (err->str1) {
-        luaL_addstring(buffer, err->str1);
-    }
-    if (err->str2) {
-        luaL_addstring(buffer, err->str2);
-    }
-    if (err->str3) {
-        luaL_addstring(buffer, err->str3);
-    }
+    luaL_pushresult(&buf);
 }
 
 /* Validates XML documents against RELAX NG XML Schemas.
@@ -86,11 +84,10 @@ static int l_validate_relax_ng (lua_State *L) {
         return luaL_error(L, "Unable to create a parser context for the schema.");
     }
 
-    // Initialize a buffer for error messages.
-    luaL_Buffer buf;
-    luaL_buffinit(L, &buf);
     // Set error handler.
-    xmlRelaxNGSetParserStructuredErrors(parser_ctxt, &save_structured_errors, &buf);
+    lua_settop(L, 0);
+    lua_pushstring(L, "");
+    xmlRelaxNGSetParserStructuredErrors(parser_ctxt, &save_structured_errors, L);
 
     schema = xmlRelaxNGParse(parser_ctxt);
     if (schema == NULL) {
@@ -110,7 +107,7 @@ static int l_validate_relax_ng (lua_State *L) {
     }
 
     // Set error handler.
-    xmlRelaxNGSetValidStructuredErrors(valid_ctxt, &save_structured_errors, &buf);
+    xmlRelaxNGSetValidStructuredErrors(valid_ctxt, &save_structured_errors, L);
 
     int is_valid = (xmlRelaxNGValidateDoc(valid_ctxt, doc) == 0);
     xmlRelaxNGFreeValidCtxt(valid_ctxt);
@@ -120,7 +117,8 @@ static int l_validate_relax_ng (lua_State *L) {
     xmlFreeDoc(doc);
     // Push results: (boolean), (string)
     lua_pushboolean(L, is_valid);
-    luaL_pushresult(&buf);
+    lua_pushvalue(L, 1);
+    lua_remove(L, 1);
     return 2;
 }
 
@@ -145,7 +143,9 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
     luaL_Buffer buf;
     luaL_buffinit(L, &buf);
     // Set error handler.
-    xmlSchemaSetParserStructuredErrors(parser_ctxt, &save_structured_errors, &buf);
+    lua_settop(L, 0);
+    lua_pushstring(L, "");
+    xmlSchemaSetParserStructuredErrors(parser_ctxt, &save_structured_errors, L);
 
     schema = xmlSchemaParse(parser_ctxt);
     if (schema == NULL) {
@@ -165,7 +165,7 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
     }
 
     // Set error handler.
-    xmlSchemaSetValidStructuredErrors(valid_ctxt, &save_structured_errors, &buf);
+    xmlSchemaSetValidStructuredErrors(valid_ctxt, &save_structured_errors, L);
 
     int is_valid = (xmlSchemaValidateDoc(valid_ctxt, doc) == 0);
     xmlSchemaFreeValidCtxt(valid_ctxt);
@@ -175,7 +175,8 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
     xmlFreeDoc(doc);
     // Push results: (boolean), (string)
     lua_pushboolean(L, is_valid);
-    luaL_pushresult(&buf);
+    lua_pushvalue(L, 1);
+    lua_remove(L, 1);
     return 2;
 }
 

@@ -78,14 +78,14 @@ static int l_validate_relax_ng (lua_State *L) {
         xmlFreeDoc(doc);
         return luaL_error(L, "Invalid parameter #2 (%s): XML Schema can't be loaded or is not well-formed.", schema_filename);
     }
-    
+
     parser_ctxt = xmlRelaxNGNewDocParserCtxt(schema_doc);
     if (parser_ctxt == NULL) {
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
         return luaL_error(L, "Unable to create a parser context for the schema.");
     }
-    
+
     // Initialize a buffer for error messages.
     luaL_Buffer buf;
     luaL_buffinit(L, &buf);
@@ -133,14 +133,14 @@ static int validate_xsd (xmlDocPtr doc, xmlDocPtr schema_doc, lua_State *L) {
     xmlSchemaParserCtxtPtr parser_ctxt; /* the XML schema parser context */
     xmlSchemaPtr schema; /* the parsed XML schema */
     xmlSchemaValidCtxtPtr valid_ctxt; /* the XML schema validation context */
-    
+
     parser_ctxt = xmlSchemaNewDocParserCtxt(schema_doc);
     if (parser_ctxt == NULL) {
         xmlFreeDoc(schema_doc);
         xmlFreeDoc(doc);
         return luaL_error(L, "Unable to create a parser context for the schema.");
     }
-    
+
     // Initialize a buffer for error messages.
     luaL_Buffer buf;
     luaL_buffinit(L, &buf);
@@ -200,7 +200,7 @@ static int l_validate_xsd_file(lua_State *L){
         xmlFreeDoc(doc);
         return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
     }
-    
+
     return validate_xsd(doc, schema_doc, L);
 
 }
@@ -215,18 +215,18 @@ static int l_validate_xsd_string(lua_State *L){
 	size_t schema_len; /* length of the schema string buffer */
 	const char *xml = luaL_checklstring(L, 1, &xml_len); /* xml string buffer */
 	const char *schema = luaL_checklstring(L, 2, &schema_len); /* xml schema string buffer */
-	
+
 	doc = xmlReadMemory(xml, xml_len, "noname.xml", NULL, XML_PARSE_NONET);
 	if (doc == NULL) {
 	    return luaL_error(L, "Invalid parameter #1: XML can't be loaded or is not well-formed.");
 	}
-	
+
 	schema_doc = xmlReadMemory(schema, schema_len, "noname.xml", NULL, XML_PARSE_NONET);
 	if (schema_doc == NULL) {
 	    xmlFreeDoc(doc);
 	    return luaL_error(L, "Invalid parameter #2: XML Schema can't be loaded or is not well-formed.");
 	}
-	
+
 	return validate_xsd(doc, schema_doc, L);
 }
 

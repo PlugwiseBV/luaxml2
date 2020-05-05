@@ -1,4 +1,4 @@
-LuaXML2 - Lua wrapper for LibXML2's XSD and RelaxNG validation.
+LuaXML2 - Lua wrapper for LibXML2's RelaxNG validation.
 
 Author: JP Florijn <c.florijn@plugwise.com>
 (C) 2011-2014, Plugwise BV, The Netherlands

@@ -7,5 +7,5 @@ assert_command_exists () {
 assert_command_exists valgrind
 assert_command_exists lua
 
-valgrind --leak-check=full lua test_luaxml2_memoryleaks.lua
+valgrind --leak-check=full lua test/test_luaxml2_memoryleaks.lua
 
